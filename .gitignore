@@ -1,0 +1,26 @@
+# Environment and Secret Files
+.env
+.env.*
+!.env.example
+*.env
+*.pem
+*.key
+*.crt
+*.pfx
+*.id_rsa
+
+# System / OS Files
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# IDE / Editor Files
+.vscode/
+.idea/
+*.suo
+*.user
+
+# Docker / Temporary Files
+.docker/
+*.tmp

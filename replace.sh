@@ -1,45 +1,34 @@
 #!/bin/bash
+set -euo pipefail
 
-find . -type d -exec bash -c '
-        join_paths() {
-            (IFS=/; echo "$*" | tr -s /)
-        }
-        for dir do
-            full_path=$(join_paths "$dir" ".ignore")
-            if find "$dir" -maxdepth 1 -type f \( -name "*.mkv" -o -name "*.mp4" -o -name "*.avi" -o -name "*.mpg" -o -name "*.mpeg" -o -name "*.mov" -o -name "*.wmv" -o -name "*.ts"  \) | read; then
-                echo "$dir - Video file exists. skipping folder"
-                if [ -f "$full_path" ]; then
-                    rm "$full_path"
-                fi
-            else
-                subdircount=$(find "$dir" -maxdepth 1 -type d | wc -l)
+# Traverse all directories safely (handling spaces in path names)
+find . -type d -print0 | while IFS= read -r -d '' dir; do
+    ignore_file="${dir}/.ignore"
+    
+    # Early-exit search: stops as soon as the first video file is found
+    has_video=$(find "$dir" -type f \( -name "*.mkv" -o -name "*.mp4" -o -name "*.avi" -o -name "*.mpg" -o -name "*.mpeg" -o -name "*.mov" -o -name "*.wmv" -o -name "*.ts" \) -print | head -n 1)
 
-                if [[ "$subdircount" -eq 1 ]]
-                then
-					if [ -f "$full_path" ]; then
-					  echo "$dir is upto date."
-					else
-					  echo "$dir - No video file exists. creating $full_path"
-					  touch "$full_path"
-					fi					
-                else
-                    if [ -f "$full_path" ]; then
-                        rm "$full_path"
-                    fi
-                fi 
-            fi
-            FILES_FOUND=$(find "$dir" -type f \( -name "*.mkv" -o -name "*.mp4" -o  -name "*.avi" -o -name "*.mpg" -o -name "*.mpeg" -o -name "*.mov" -o -name "*.wmv" -o -name "*.ts"  \) -print)
-	    	if [ -z "$FILES_FOUND" ]; then
-		  # Create an empty text file
-		  touch "$full_path"
-		else
-		   	if [ -f "$full_path" ]; then
-		            rm "$full_path"
-		        fi	
-		fi
-        done' bash {} +
+    if [ -z "$has_video" ]; then
+        if [ ! -f "$ignore_file" ]; then
+            echo "$dir - No video file exists. Creating .ignore"
+            touch "$ignore_file"
+        fi
+    else
+        if [ -f "$ignore_file" ]; then
+            echo "$dir - Video file exists. Removing .ignore"
+            rm -f "$ignore_file"
+        fi
+    fi
+done
 
-jfurl="$JF_URL/library/refresh?api_key=$JF_API_KEY"
-echo "Calling jellyfin endpoint: $jfurl"
-
-curl -s -S -d "" -w "jellyfin library refresh completed with http_code:%{http_code}\\n" -H "Accept: application/json" "$jfurl"
+# Trigger Jellyfin library refresh if parameters are set
+if [ -n "${JF_URL:-}" ] && [ -n "${JF_API_KEY:-}" ]; then
+    clean_url="${JF_URL%/}"
+    jfurl="${clean_url}/library/refresh?api_key=${JF_API_KEY}"
+    
+    # Redact API key in stdout/logs to prevent secret exposure
+    log_url="${clean_url}/library/refresh?api_key=***"
+    echo "Calling Jellyfin endpoint: $log_url"
+    
+    curl -s -S -d "" -w "Jellyfin library refresh completed with http_code: %{http_code}\n" -H "Accept: application/json" "$jfurl"
+fi
