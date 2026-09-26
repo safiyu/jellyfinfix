@@ -1,9 +1,13 @@
 #!/bin/bash
 set -eu
 
-# Exclude metadata and hidden folders (.trickplay, .git, .tmp, etc.) from directory processing
-find . \( -name "*.trickplay" -o -name ".*" \) -prune -o -type d -print0 | while IFS= read -r -d '' dir; do
-    [ "$dir" = "." ] && continue
+# Safely traverse all directories
+find . -type d -print0 | while IFS= read -r -d '' dir; do
+    # Skip root '.', hidden directories ('/.'), and '.trickplay' directories
+    if [ "$dir" = "." ] || [[ "$dir" =~ /\. ]] || [[ "$dir" =~ \.trickplay ]]; then
+        continue
+    fi
+
     ignore_file="${dir}/.ignore"
     
     # Early-exit search: find first video file (case-insensitive)
