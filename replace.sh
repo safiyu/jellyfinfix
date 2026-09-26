@@ -32,6 +32,7 @@ if [ -n "${JF_URL:-}" ] && [ -n "${JF_API_KEY:-}" ]; then
     
     curl -s -S -X POST -d "" \
         -H "Accept: application/json" \
+        -H "Authorization: MediaBrowser Token=\"${JF_API_KEY}\"" \
         -H "X-Emby-Token: ${JF_API_KEY}" \
         -H "X-MediaBrowser-Token: ${JF_API_KEY}" \
         -w "jellyfin library refresh completed with http_code: %{http_code}\n" \
