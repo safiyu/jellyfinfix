@@ -5,7 +5,9 @@ services:
     volumes:
       - /share/Media:/media:rw
     environment:
-      - CRON_STRING=* * * * *
+      - MODE=watch
+      - DEBOUNCE_SECONDS=10
+      - CRON_STRING=0 */6 * * *
       - TZ=Europe/Paris
     restart: always
     healthcheck:

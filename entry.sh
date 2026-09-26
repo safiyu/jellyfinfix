@@ -1,9 +1,12 @@
 #!/bin/bash
 set -euo pipefail
 
+LOCKFILE="/tmp/jellyfix.lock"
+
 echo "Start: $(date)"
 echo "Starting scan"
-cd /media || exit 1
-bash /app/replace.sh
+
+flock -x "$LOCKFILE" bash -c "cd /media && bash /app/replace.sh"
+
 echo "Scan ended"
 echo "End: $(date)"
