@@ -1,12 +1,12 @@
 #!/bin/bash
-set -euo pipefail
+set -eu
 
 # Traverse all directories safely (handling spaces in path names)
 find . -type d -print0 | while IFS= read -r -d '' dir; do
     ignore_file="${dir}/.ignore"
     
-    # Early-exit search: stops as soon as the first video file is found
-    has_video=$(find "$dir" -type f \( -name "*.mkv" -o -name "*.mp4" -o -name "*.avi" -o -name "*.mpg" -o -name "*.mpeg" -o -name "*.mov" -o -name "*.wmv" -o -name "*.ts" \) -print | head -n 1)
+    # Early-exit search: find first video file (use || true to handle SIGPIPE when head closes pipe)
+    has_video=$(find "$dir" -type f \( -name "*.mkv" -o -name "*.mp4" -o -name "*.avi" -o -name "*.mpg" -o -name "*.mpeg" -o -name "*.mov" -o -name "*.wmv" -o -name "*.ts" \) -print 2>/dev/null | head -n 1 || true)
 
     if [ -z "$has_video" ]; then
         if [ ! -f "$ignore_file" ]; then
