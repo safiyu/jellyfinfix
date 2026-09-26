@@ -30,5 +30,10 @@ if [ -n "${JF_URL:-}" ] && [ -n "${JF_API_KEY:-}" ]; then
     log_url="${clean_url}/library/refresh?api_key=***"
     echo "Calling Jellyfin endpoint: $log_url"
     
-    curl -s -S -d "" -w "Jellyfin library refresh completed with http_code: %{http_code}\n" -H "Accept: application/json" "$jfurl"
+    curl -s -S -X POST -d "" \
+        -H "Accept: application/json" \
+        -H "X-Emby-Token: ${JF_API_KEY}" \
+        -H "X-MediaBrowser-Token: ${JF_API_KEY}" \
+        -w "jellyfin library refresh completed with http_code: %{http_code}\n" \
+        "$jfurl"
 fi
