@@ -1,12 +1,13 @@
 #!/bin/bash
 set -eu
 
-# Traverse all directories safely (handling spaces in path names)
-find . -type d -print0 | while IFS= read -r -d '' dir; do
+# Exclude metadata and hidden folders (.trickplay, .git, .tmp, etc.) from directory processing
+find . \( -name "*.trickplay" -o -name ".*" \) -prune -o -type d -print0 | while IFS= read -r -d '' dir; do
+    [ "$dir" = "." ] && continue
     ignore_file="${dir}/.ignore"
     
-    # Early-exit search: find first video file (use || true to handle SIGPIPE when head closes pipe)
-    has_video=$(find "$dir" -type f \( -name "*.mkv" -o -name "*.mp4" -o -name "*.avi" -o -name "*.mpg" -o -name "*.mpeg" -o -name "*.mov" -o -name "*.wmv" -o -name "*.ts" \) -print 2>/dev/null | head -n 1 || true)
+    # Early-exit search: find first video file (case-insensitive)
+    has_video=$(find "$dir" -type f \( -iname "*.mkv" -o -iname "*.mp4" -o -iname "*.avi" -o -iname "*.mpg" -o -iname "*.mpeg" -o -iname "*.mov" -o -iname "*.wmv" -o -iname "*.ts" \) -print 2>/dev/null | head -n 1 || true)
 
     if [ -z "$has_video" ]; then
         if [ ! -f "$ignore_file" ]; then
